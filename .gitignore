@@ -1,0 +1,9 @@
+!fbrelayhub/.ssb/
+fbrelayhub/.ssb/*
+!fbrelayhub/.ssb/dummy.txt
+!fbrelay_ssb/
+fbrelay_ssb/*
+!fbrelay_ssb/.ssbshared/
+fbrelay_ssb/.ssbshared/cookies.txt
+fbrelay_proxy/
+__pycache__/

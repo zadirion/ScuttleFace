@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "docker-build",
+            "label": "docker-build",
+            "platform": "python",
+            "dockerBuild": {
+                "tag": "myapp:latest",
+                "dockerfile": "${workspaceFolder}/Dockerfile",
+                "context": "${workspaceFolder}",
+                "pull": true
+            }
+        },
+        {
+            "type": "docker-run",
+            "label": "docker-run: debug",
+            "dependsOn": [
+                "docker-build"
+            ],
+            "python": {
+                "args": [
+                    "WATOP-107592511746715",
+                    "30",
+                    "--log",
+                    "INFO"
+                ],
+                "file": "/app/main.py"
+            },
+            "dockerRun": {
+                "containerName":"fbrelay.container",
+                "ports": [
+                    {
+                        "hostPort": 8006,
+                        "containerPort": 8008
+                    }
+                ],
+                "volumes": [
+                    {
+                        "containerPath": "/app/",
+                        "localPath": "${workspaceFolder}/"
+                    },
+                    {
+                        "containerPath": "/root/.ssbshared",
+                        "localPath": "${workspaceFolder}/../fbrelay_ssb/.ssbshared"
+                    },
+                ]
+            }
+        }
+    ]
+}
