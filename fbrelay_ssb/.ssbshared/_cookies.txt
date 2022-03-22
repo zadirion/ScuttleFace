@@ -1,0 +1,6 @@
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+# rename me to cookies.txt in order to be used, after populating me with the appropriate
+# cookies for facebook login, of course
+# cookies.txt is ignored in git so it should be safe to save your sensitive cookies inside it

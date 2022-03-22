@@ -1,0 +1,19 @@
+{
+    "connections":{
+        "incoming": {
+            "net": [{ "scope": "public", "transform": "shs","host":"0.0.0.0"}]
+        },
+        "outgoing": {
+            "net": [{ "transform": "shs" }],
+            "onion": [{ "transform": "shs" }]
+        }
+    },
+	"friends":{
+		"dunbar":150,
+		"hops":3
+	},
+	"gossip":{
+		"connections":2
+	},
+	"pub": true
+}
