@@ -1,4 +1,5 @@
 Scuttleface is intended to relay your favorite facebook page onto the Scuttlebutt network
+For an example a running relay, check out @DGQe/A+GFqwH/gF1/39Zknel3kdko0jm2oRQToE4wj4=.ed25519 on FreeSocial (pub invite code pub.freesocial.co:8008:@ofYKOy2p9wsaxV73GqgOyh6C6nRGFM5FyciQyxwBd6A=.ed25519~ye9Z808S3KPQsV0MWr1HL0/Sh8boSEwW+ZK+8x85u9w=)
 
 SETUP instructions:
 - install Docker and make sure it's running
