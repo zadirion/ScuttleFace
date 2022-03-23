@@ -114,6 +114,7 @@ def UpdateProfile(fbprofilename):
     def PostOnSSB(post, image):
         link=post['link']
         time=post['time']
+        video=post['video']
         timestr=""
         if time:
             timestr=time.strftime("%d-%b-%Y (%H:%M)")
@@ -133,7 +134,12 @@ def UpdateProfile(fbprofilename):
         if ( sharedtext):
             sharedtext = sharedtext.replace("\n", "\n>")
             msg = msg + "\n " + "> " + sharedtext
-            
+        if ( video ):
+            msg = msg + "\n" + "[Video]("+video+")"
+        posturl=post['post_url']
+        if(posturl):
+            msg = msg + "\n" + "[Original post]("+video+")"
+
         finalmsg = shlex.quote(msg)
         result=subprocess.run(
             [

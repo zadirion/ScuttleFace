@@ -148,6 +148,9 @@ def ConnectRelayToHub(channelName:str,port:int,image:str):
     invite=GenerateInvite()
     AcceptInvite(channelName,port,image,invite)
 
+def ConnectRelayToPub(invite,channelName:str,port:int,image:str):    
+    AcceptInvite(channelName,port,image,invite)
+
 def GetContainers():
     stream = os.popen("docker container ls -a")
     output = stream.read()
@@ -160,10 +163,19 @@ def ProcessFrame():
     dpg.run_callbacks(jobs)
     dpg.render_dearpygui_frame()
 
-def main():
-
+def RestartAllRelays():
+    print("Restarting all relays...")
     existingContainers = GetContainers()
+    for relayname in existingContainers:    
+        name = relayname.split('.')[0]    
+        if name!="fbrelayhub":
+            print("Restarting " + name + "...")            
+            EnsureStartedContainer(name,8008,"fbrelay","fbrelaynet",hostmode=False)
+            print("Finished restarting " + name)
+    print("Finished restarting all relays")
 
+def main():
+            
     EnsureStartedContainer("fbrelayhub",8008,"fbrelayhub","fbrelaynet",hostmode=True)
 
     #port=FindFreePort(existingContainers)
@@ -198,6 +210,12 @@ def main():
         EnsureStartedContainer(channelname,8008,"fbrelay","fbrelaynet",hostmode=False)
         ConnectRelayToHub(channelname,8008,"fbrelay")
         #dpg.show_item("file_dialog_id")
+    def JoinPubUsingInvite(sender,data):
+        invite=dpg.get_value("invite")
+        channelname=dpg.get_value("channel_name")
+        dpg.set_value("channel_name","")
+        ProcessFrame()
+        ConnectRelayToPub(invite,channelname,8008,"fbrelay")
 
     dpg.create_context()
     dpg.configure_app(manual_callback_management=True)
@@ -209,14 +227,23 @@ def main():
 
     dpg.add_file_dialog(directory_selector=True, show=False, callback=callback, tag="file_dialog_id")
 
+    def RebuildRelayImage():
+        BuildImage("fbrelay")
+        print("rebuild finished")
+
     with dpg.window(label="Example window") as main_window:
         dpg.add_text("Add a page from facebook")
         
         dpg.add_input_text(tag="channel_name",label="Channel Name", default_value="") 
-        dpg.add_button(label="Start relay", callback=StartRelayContainerCb)
-        dpg.add_button(label="Ensure Invite", callback=EnsureInvite)
+        dpg.add_button(label="(Re)Start relay", callback=StartRelayContainerCb)
+        dpg.add_button(label="Make friends with relay hub", callback=EnsureInvite)
         #sbot publish --type about --about "@your.public.id.here" --publicWebHosting
-        dpg.add_button(label="Ensure profile public (parsable by viewers)", callback=MakeProfilePublic)
+        dpg.add_button(label="Make profile public (parsable by viewers)", callback=MakeProfilePublic)
+        
+        dpg.add_input_text(tag="invite",label="Invite", default_value="") 
+        dpg.add_button(label="Join Pub using invite code", callback=JoinPubUsingInvite)
+        dpg.add_button(label="Rebuild relay docker image", callback=RebuildRelayImage)
+        dpg.add_button(label="Restart all relays", callback=RestartAllRelays)
 
     dpg.setup_dearpygui()
     dpg.show_viewport()
