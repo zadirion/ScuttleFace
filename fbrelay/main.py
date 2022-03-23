@@ -138,7 +138,7 @@ def UpdateProfile(fbprofilename):
             msg = msg + "\n" + "[Video]("+video+")"
         posturl=post['post_url']
         if(posturl):
-            msg = msg + "\n" + "[Original post]("+video+")"
+            msg = msg + "\n" + "[Original post]("+posturl+")"
 
         finalmsg = shlex.quote(msg)
         result=subprocess.run(
@@ -239,6 +239,8 @@ def UpdateProfile(fbprofilename):
                 ,shell=False, capture_output=True,text=True)
         
         lg.warning("Updated profile name")
+
+    set_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36")
 
     logger.warning("Retrieving posts from facebook")
     posts = get_posts(fbprofilename, pages=5, cookies=cookiesPath)

@@ -76,13 +76,13 @@ def DeleteContainer(name:str,port:int,image:str):
     os.system("docker container stop "+containername)
     os.system("docker container rm "+containername)
 
-def EnsureStartedContainer(name:str,port:int,image:str,networkname,hostmode:bool):
+def EnsureStartedContainer(name:str,port:int,image:str,networkname,hostmode:bool, fixConnectionLimit:bool=True):
     DeleteContainer(name,port,image)
     found=ContainerExists(name,port,image)
     while found == -1:        
         logger = logging.getLogger()
         logger.error("Container " + image + ".image doesnt exist. Creating")
-        CreateContainer(name,port,image,networkname,hostmode)
+        CreateContainer(name,port,image,networkname,hostmode, fixConnectionLimit)
 
         logger.error("Creating container finished")
         found=ContainerExists(name,port,image)
@@ -102,7 +102,7 @@ def GetFileDir():
     cd = os.path.dirname(os.path.realpath(__file__))
     return cd
 
-def CreateContainer(channelname:str, port:int,image:str="fbrelay",networkname:str="fbrelaynet",hostmode:bool=False):
+def CreateContainer(channelname:str, port:int,image:str="fbrelay",networkname:str="fbrelaynet",hostmode:bool=False, fixConnectionLimit:bool=True):
     EnsureImage(image)
     cd = GetFileDir()
     ssblocation=os.path.join(cd,"fbrelay_ssb",channelname)
@@ -117,13 +117,16 @@ def CreateContainer(channelname:str, port:int,image:str="fbrelay",networkname:st
         " --network "+networkname +\
         " --restart unless-stopped "\
         " --mount type=bind,source="+ssblocation+",target=/root/.ssb "\
-        " --mount type=bind,source="+ssbsharedlocation+",target=/root/.ssbshared "\
-        " --sysctl net.core.somaxconn=100000 "\
-        " --sysctl net.ipv4.tcp_max_syn_backlog=60000 "\
-        " --sysctl net.ipv4.tcp_fin_timeout=5 "\
-        " --sysctl net.ipv4.tcp_tw_reuse=1 "\
-        " --sysctl net.netfilter.nf_conntrack_tcp_timeout_time_wait=5 " + \
-        image + ".image \""+channelname+"\" \"30\" " + str(port)
+        " --mount type=bind,source="+ssbsharedlocation+",target=/root/.ssbshared ";
+    if fixConnectionLimit:
+        command += \
+            " --sysctl net.core.somaxconn=100000 "\
+            " --sysctl net.ipv4.tcp_max_syn_backlog=60000 "\
+            " --sysctl net.ipv4.tcp_fin_timeout=2 "\
+            " --sysctl net.ipv4.tcp_tw_reuse=1 "\
+            " --sysctl net.ipv4.tcp_rfc1337=1 "
+    command += " --sysctl net.netfilter.nf_conntrack_tcp_timeout_time_wait=5 " + \
+    image + ".image \""+channelname+"\" \"30\" " + str(port)
         
         #" --network fbrelaynet "\
     stream=os.popen(command)
@@ -176,7 +179,7 @@ def RestartAllRelays():
 
 def main():
             
-    EnsureStartedContainer("fbrelayhub",8008,"fbrelayhub","fbrelaynet",hostmode=True)
+    EnsureStartedContainer("fbrelayhub",8008,"fbrelayhub","fbrelaynet",hostmode=True, fixConnectionLimit=False)
 
     #port=FindFreePort(existingContainers)
     def EnsureInvite():
@@ -210,12 +213,29 @@ def main():
         EnsureStartedContainer(channelname,8008,"fbrelay","fbrelaynet",hostmode=False)
         ConnectRelayToHub(channelname,8008,"fbrelay")
         #dpg.show_item("file_dialog_id")
+
     def JoinPubUsingInvite(sender,data):
         invite=dpg.get_value("invite")
         channelname=dpg.get_value("channel_name")
         dpg.set_value("channel_name","")
         ProcessFrame()
         ConnectRelayToPub(invite,channelname,8008,"fbrelay")
+
+    def JoinWithRelayNamed(relay:str):        
+        invite=dpg.get_value("invite")
+        ConnectRelayToPub(invite,relay,8008,"fbrelay")
+
+    def AllPagesJoinPub():        
+        print("Joining with all relays...")
+        existingContainers = GetContainers()
+        for relayname in existingContainers:    
+            name = relayname.split('.')[0]    
+            if name!="fbrelayhub":
+                print("Joining with " + name + "...")            
+                JoinWithRelayNamed(name)
+                print("Finished joining with " + name)
+        print("Finished joining with all relays")
+
 
     dpg.create_context()
     dpg.configure_app(manual_callback_management=True)
@@ -242,6 +262,8 @@ def main():
         
         dpg.add_input_text(tag="invite",label="Invite", default_value="") 
         dpg.add_button(label="Join Pub using invite code", callback=JoinPubUsingInvite)
+        dpg.add_button(label="All pages join Pub using invite code", callback=AllPagesJoinPub)
+        
         dpg.add_button(label="Rebuild relay docker image", callback=RebuildRelayImage)
         dpg.add_button(label="Restart all relays", callback=RestartAllRelays)
 
